@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>薪資領據製作小幫手</title>
+    <link rel="icon" href="/favicon.svg" />
+    <style>
+      :root {
+        --bg: #0b0c10;
+        --panel: #16181d;
+        --muted: #8b949e;
+        --text: #e6edf3;
+        --accent: #2ea043;
+        --border: #22252c;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          "Noto Sans TC", "PingFang TC", Helvetica, Arial, "Apple Color Emoji",
+          "Segoe UI Emoji";
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 12px;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 920px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+      }
+      .card-h {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+      }
+      .card-c {
+        padding: 16px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      label {
+        color: var(--muted);
+        text-align: right;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #0f1116;
+        color: var(--text);
+        outline: none;
+      }
+      textarea {
+        min-height: 64px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border);
+        background: #0f1116;
+        padding: 8px 12px;
+        border-radius: 10px;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: #09110a;
+        border-color: transparent;
+        font-weight: 600;
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      code.badge {
+        background: #0f1116;
+        border: 1px solid var(--border);
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 12px;
+      }
+      ul,
+      ol {
+        margin: 6px 0;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        margin-right: 6px;
+        font-size: 12px;
+      }
+      .footer {
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
