@@ -103,6 +103,10 @@ export default function PayslipHelper() {
   const [singleSalary, setSingleSalary] = useState('')
   const [singleIdno, setSingleIdno] = useState('')
 
+  // 新增：單張覆蓋用的年月（民國年、月），選填
+  const [ymYear, setYmYear] = useState('')   // 例如 114
+  const [ymMonth, setYmMonth] = useState('') // 1~12
+
   // 區塊 3：批次輸出
   const [batchOrg, setBatchOrg] = useState<string>('')
   const [batchFile, setBatchFile] = useState<File | null>(null)
@@ -337,6 +341,30 @@ export default function PayslipHelper() {
               {INSTITUTIONS.map(x => <option key={x} value={x}>{x}</option>)}
             </select>
           </div>
+          <div className="row">
+  <label>年月（選填）</label>
+  <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
+    <input
+      style={{width:120}}
+      inputMode="numeric"
+      placeholder="民國年"
+      value={ymYear}
+      onChange={(e)=> setYmYear(e.target.value.replace(/[^\d]/g,''))}
+    />
+    <span>年</span>
+    <input
+      style={{width:80}}
+      inputMode="numeric"
+      placeholder="月"
+      value={ymMonth}
+      onChange={(e)=> {
+        const v = e.target.value.replace(/[^\d]/g,'')
+        setYmMonth(v)
+      }}
+    />
+    <span>月</span>
+  </div>
+</div>
 
           <div className="row">
             <label>姓名</label>
