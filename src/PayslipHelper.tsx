@@ -159,22 +159,34 @@ export default function PayslipHelper() {
     saveAs(out, `${base}-${fileLabel}.docx`)
   }
 
-  function handleGenerateSingle() {
-    if (!templateBuf) return alert('請先選擇或載入模板')
-    if (!singleName || !singleSalary) return alert('請輸入姓名與薪資')
-    const n = Number(singleSalary.toString().replace(/[,\\s]/g, ''))
-    if (!Number.isFinite(n)) return alert('薪資需為數字')
+function handleGenerateSingle() {
+  if (!templateBuf) return alert('請先選擇或載入模板')
+  if (!singleName || !singleSalary) return alert('請輸入姓名與薪資')
 
-    const data = {
-      姓名: singleName,
-      薪資: n.toString(),
-      薪資數字大寫: numberToChineseUpper(n),
-      身份證字號: singleIdno || '',
-      機構: org || '',
-      ...defaultData,
-    }
-    renderDocx(data, singleName)
+  const n = Number(singleSalary.toString().replace(/[\s,]/g, ''))
+  if (!Number.isFinite(n)) return alert('薪資需為數字')
+
+  // 用今天作為基底，再用使用者輸入覆蓋（若有填）
+  const dateData = { ...defaultData }
+  if (ymYear) dateData.民國年 = ymYear
+  if (ymMonth) {
+    const m = Math.max(1, Math.min(12, Number(ymMonth)))
+    // 若希望有前導零，改成：String(m).padStart(2, '0')
+    dateData.月 = String(m)
   }
+  // 你沒有提供「日」欄位，就維持今天的日；若想清空可加：dateData.日 = ''
+
+  const data = {
+    姓名: singleName,
+    薪資: n.toString(),
+    薪資數字大寫: numberToChineseUpper(n),
+    身份證字號: singleIdno || '',
+    機構: org || '',
+    ...dateData, // ← 這裡改成覆蓋後的日期資料
+  }
+
+  renderDocx(data, singleName)
+}
 
   async function handleBatchExcel(file: File) {
     if (!templateBuf) return alert('請先選擇或載入模板')
@@ -198,14 +210,21 @@ export default function PayslipHelper() {
       const n = Number(String(salaryRaw).replace(/[,\\s]/g, ''))
       if (!Number.isFinite(n)) continue
 
-      const data = {
-        姓名: name,
-        薪資: n.toString(),
-        薪資數字大寫: upperRaw ? String(upperRaw) : numberToChineseUpper(n),
-        身份證字號: idno,
-        機構: batchOrg,           // ★ 一律使用批次下拉的機構
-        ...defaultData,
-      }
+      const dateData = { ...defaultData }
+if (ymYear) dateData.民國年 = ymYear
+if (ymMonth) {
+  const m = Math.max(1, Math.min(12, Number(ymMonth)))
+  dateData.月 = String(m)
+}
+
+const data = {
+  姓名: name,
+  薪資: n.toString(),
+  薪資數字大寫: upperRaw ? String(upperRaw) : numberToChineseUpper(n),
+  身份證字號: idno,
+  機構: batchOrg,
+  ...dateData,
+}
 
       const zip = new PizZip(templateBuf!)
       const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true })
