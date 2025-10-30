@@ -17,7 +17,7 @@ export default function App() {
 
       <PayslipHelper />
 
-      <div className="footer" style={{marginTop: 24}}>© 2025 Payslip Helper • Vite + React</div>
+      <div className="footer" style={{marginTop: 24}}>© 2025 Payslip Helper</div>
     </div>
   )
 }

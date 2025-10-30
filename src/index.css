@@ -162,3 +162,113 @@ input[type="file"]::-webkit-file-upload-button {
   margin-right: 10px;
   cursor: pointer;
 }
+
+/* 讓檔案 input 可以縮到 23%（桌面），手機自動滿版 */
+.file-compact {
+  width: 23% !important;
+  min-width: 220px;      /* 視需求可調，避免太窄 */
+}
+
+@media (max-width: 640px) {
+  .file-compact { width: 100% !important; }
+}
+
+/* 隱藏 radio，但保留可聚焦/可操作性 */
+.tpl-radio {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* 模板卡片：開啟相對定位與遮溢，準備放光效 */
+.tpl-option {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .2s ease, box-shadow .2s ease, transform .1s ease;
+}
+
+/* Hover 玻璃光（sheen） */
+.tpl-option::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: -120%;
+  width: 70%;
+  height: 160%;
+  transform: skewX(-20deg);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,.12) 45%,
+    rgba(255,255,255,.28) 50%,
+    rgba(255,255,255,.12) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+.tpl-option:hover::before {
+  animation: tpl-sheen 900ms ease;
+}
+@keyframes tpl-sheen {
+  0%   { left: -120%; }
+  100% { left: 140%; }
+}
+
+/* 輕微浮起 */
+.tpl-option:hover { transform: translateY(-1px); }
+
+/* 選取狀態高亮（支援現代瀏覽器） */
+.tpl-option:has(.tpl-radio:checked) {
+  border-color: var(--btn-primary-bg) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--btn-primary-bg) 22%, transparent);
+}
+
+/* 鍵盤可見焦點 */
+.tpl-option:has(.tpl-radio:focus-visible) {
+  outline: 2px solid var(--btn-primary-bg);
+  outline-offset: 2px;
+}
+
+/* 玻璃感底（可選：讓卡片更像玻璃） */
+.tpl-option {
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  backdrop-filter: saturate(140%) blur(6px);
+}
+:root[data-theme="dark"] .tpl-option {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+/* === 加強日間模式的玻璃光效果（sheen） === */
+:root:not([data-theme="dark"]) .tpl-option::before {
+  /* 光帶更寬、更深、對比更高 */
+  width: 90%;
+  height: 180%;
+  transform: skewX(-18deg);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(170, 170, 170, .10) 40%,
+    rgba(255, 255, 255, .70) 50%,   /* 提高白色透明度 */
+    rgba(170, 170, 170, .10) 60%,
+    transparent 100%
+  );
+  /* 在淺底上用乘色可拉出光帶邊緣 */
+  mix-blend-mode: multiply; /* 若覺得太強可改為 normal 或 overlay */
+}
+
+/* 滑過時稍微加陰影與邊框，讓對比更明顯（只在日間模式） */
+:root:not([data-theme="dark"]) .tpl-option:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,.08);
+  border-color: #b9c1c8;  /* 淺灰一點點 */
+}
+
+/* 選取狀態在日間模式再加一圈淡外光暈 */
+:root:not([data-theme="dark"]) .tpl-option:has(.tpl-radio:checked) {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--btn-primary-bg) 22%, transparent),
+    0 6px 14px rgba(0,0,0,.08);
+}
+

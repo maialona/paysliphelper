@@ -23,7 +23,7 @@ export default function ThemeToggle() {
       }}
     >
       <span style={{fontSize: 16}}>{isDark ? '🌙' : '☀️'}</span>
-      <span style={{fontSize: 14}}>{isDark ? '夜間' : '日間'}</span>
+      {/*<span style={{fontSize: 14}}>{isDark ? '夜間' : '日間'}</span>*/}
     </button>
   )
 }

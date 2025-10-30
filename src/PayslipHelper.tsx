@@ -1,5 +1,4 @@
-// src/PayslipHelper.tsx
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import PizZip from 'pizzip'
 import Docxtemplater from 'docxtemplater'
 import * as XLSX from 'xlsx'
@@ -8,11 +7,13 @@ import { saveAs } from 'file-saver'
 
 type TemplateKey = 'tpl1' | 'tpl2' | 'custom'
 
+const BASE = import.meta.env.BASE_URL || '/';
+
 const TEMPLATES: Record<TemplateKey, { label: string; url?: string }> = {
-  tpl1: { label: '模板1：勞務所得(B+G+S)', url: '/templates/勞務所得(B+G+S).docx' },
-  tpl2: { label: '模板2：預支獎金',        url: '/templates/預支獎金.docx' },
+  tpl1: { label: '模板1：勞務所得(B+G+S)', url: `${BASE}templates/勞務所得(B+G+S).docx` },
+  tpl2: { label: '模板2：預支獎金',        url: `${BASE}templates/預支獎金.docx` },
   custom: { label: '自訂上傳' },
-}
+};
 
 const INSTITUTIONS = [
   '府城長照有限公司附設臺南市私立鴻康居家長照機構',
@@ -63,7 +64,7 @@ function numberToChineseUpper(n: number): string {
     if (jiao > 0) fracStr += CN_NUM[jiao] + '角'
     if (fen > 0) fracStr += CN_NUM[fen] + '分'
   }
-  return intStr + '元' + (fracStr || '整')
+  return intStr //+ '元' + (fracStr || '整')
 }
 
 function rocDateParts(d = new Date()) {
@@ -102,8 +103,11 @@ export default function PayslipHelper() {
   const [singleSalary, setSingleSalary] = useState('')
   const [singleIdno, setSingleIdno] = useState('')
 
-  // 區塊 3：批次輸出的機構（必填）
+  // 區塊 3：批次輸出
   const [batchOrg, setBatchOrg] = useState<string>('')
+  const [batchFile, setBatchFile] = useState<File | null>(null)
+  const batchInputRef = useRef<HTMLInputElement>(null)
+  const [isBatchLoading, setIsBatchLoading] = useState(false)
 
   const amountUpper = useMemo(() => {
     const n = Number(singleSalary.toString().replace(/[,\\s]/g, ''))
@@ -170,8 +174,6 @@ export default function PayslipHelper() {
 
   async function handleBatchExcel(file: File) {
     if (!templateBuf) return alert('請先選擇或載入模板')
-
-    // 必填：批次機構
     if (!batchOrg) return alert('請先在「批次產出」選擇機構')
 
     const buf = await file.arrayBuffer()
@@ -227,6 +229,8 @@ export default function PayslipHelper() {
     setTemplateBuf(null); setTemplateName(''); setPlaceholders([])
     handleResetSection2()
     setBatchOrg('')
+    setBatchFile(null)
+    if (batchInputRef.current) batchInputRef.current.value = ''
   }
 
   // 模板 label 顯示：tpl1/tpl2 兩行，自訂一行
@@ -246,6 +250,7 @@ export default function PayslipHelper() {
             {(['tpl1','tpl2','custom'] as TemplateKey[]).map(k => (
               <label
                 key={k}
+                className="tpl-option"
                 style={{
                   display:'flex',
                   alignItems:'center',
@@ -255,22 +260,23 @@ export default function PayslipHelper() {
                   padding:'10px 14px',
                   minWidth: 240,
                   maxWidth: 280,
-                  background:'var(--surface)'  // 主題變數
+                  background:'var(--surface)'
                 }}
               >
                 <input
                   type="radio"
                   name="tpl"
+                  className="tpl-radio"
                   value={k}
                   checked={selectedTpl === k}
                   onChange={() => setSelectedTpl(k)}
-                  style={{ transform:'scale(0.9)', margin:0 }}
+                  style={{ margin:0 }}
                 />
                 <span
                   style={{
                     display:'block',
                     width:'100%',
-                    whiteSpace:'pre-line',   // 讓 \n 換行
+                    whiteSpace:'pre-line',
                     lineHeight:1.4,
                     textAlign:'center'
                   }}
@@ -283,12 +289,15 @@ export default function PayslipHelper() {
 
           {selectedTpl === 'custom' && (
             <div style={{display:'flex', gap:12, alignItems:'center', marginTop:4}}>
-              <input type="file" accept=".docx" onChange={(e) => e.target.files && handleTemplateUpload(e.target.files[0])} />
+              <input
+                type="file" accept=".docx"
+                className="file-compact"
+                onChange={(e) => e.target.files && handleTemplateUpload(e.target.files[0])}
+              />
               <span className="muted">已載入：{templateName || '（尚未選擇）'}</span>
             </div>
           )}
 
-          {/* 只保留提示用徽章；實際掃描結果不再顯示 XML */}
           <div className="muted" style={{marginTop:12}}>
             模板可使用變數：
             <code className="badge">{'{姓名}'}</code>{' '}
@@ -346,7 +355,6 @@ export default function PayslipHelper() {
             <textarea readOnly value={amountUpper} />
           </div>
 
-          {/* 右下角：清除（清本卡片欄位）＋ 輸出 */}
           <div style={{display:'flex', justifyContent:'flex-end', gap:8}}>
             <button className="btn" onClick={handleResetSection2}>清除</button>
             <button className="btn primary" onClick={handleGenerateSingle}>輸出 .docx</button>
@@ -359,37 +367,81 @@ export default function PayslipHelper() {
         <div className="card-h">3) 批次產出（Excel / CSV）</div>
         <div className="card-c">
           {/* 批次機構（必填） */}
-<div
-  className="row"
-  // 讓右側欄位更長：第二欄改成固定可達更寬的 minmax
-  style={{ gridTemplateColumns: '120px minmax(0, 980px)' }}
->
-  <label style={{ textAlign: 'left' }}>選擇機構</label>
-  <select
-    value={batchOrg}
-    onChange={(e)=>setBatchOrg(e.target.value)}
-    style={{
-      background:'var(--surface)',
-      color:'var(--text)',
-      border:'1px solid var(--border)',
-      borderRadius:10,
-      padding:'10px 12px',
-      width:'100%',        // 吃滿這一欄
-      maxWidth:'1000px'     // 上限（可自行再放大）
-    }}
-  >
-    <option value="">（請選擇機構）</option>
-    {INSTITUTIONS.map(x => <option key={x} value={x}>{x}</option>)}
-  </select>
-</div>
+          <div
+            className="row"
+            style={{ gridTemplateColumns: '65px minmax(0, 980px)' }}
+          >
+            <label style={{ textAlign: 'right' }}>選擇機構</label>
+            <select
+              value={batchOrg}
+              onChange={(e)=>setBatchOrg(e.target.value)}
+              style={{
+                background:'var(--surface)',
+                color:'var(--text)',
+                border:'1px solid var(--border)',
+                borderRadius:10,
+                padding:'10px 12px',
+                width:'100%',
+                maxWidth:'1000px'
+              }}
+            >
+              <option value="">（請選擇機構）</option>
+              {INSTITUTIONS.map(x => <option key={x} value={x}>{x}</option>)}
+            </select>
+          </div>
 
-<div style={{display:'flex', gap:12, alignItems:'center', marginTop:8}}>
-  <input
-    type="file" accept=".xlsx,.xls,.csv"
-    style={{ flex: '1 1 600px' }}   // 600px 為預設基準寬，會隨容器伸縮
-  />
-  <a className="btn" href="/sample.xlsx" download>範本</a>
-</div>
+          {/* 選檔 + 下載控制 */}
+          <div style={{display:'flex', gap:12, alignItems:'center', marginTop:8, flexWrap:'wrap'}}>
+            <input
+              ref={batchInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="file-compact"
+              style={{ flex: '0 0 auto' }}
+              onChange={(e) => {
+                const f = e.target.files?.[0] || null
+                setBatchFile(f)
+              }}
+            />
+
+            <span className="muted" style={{minWidth:180}}>
+              {batchFile ? `已選：${batchFile.name}` : '尚未選擇檔案'}
+            </span>
+
+            <button
+              className="btn primary"
+              disabled={!templateBuf || !batchOrg || !batchFile || isBatchLoading}
+              onClick={async () => {
+                if (!templateBuf) { alert('請先選擇或載入模板'); return }
+                if (!batchOrg) { alert('請先選擇機構'); return }
+                if (!batchFile) { alert('請先選擇 Excel/CSV 檔'); return }
+                try {
+                  setIsBatchLoading(true)
+                  await handleBatchExcel(batchFile)
+                } finally {
+                  setIsBatchLoading(false)
+                  setBatchFile(null)
+                  if (batchInputRef.current) batchInputRef.current.value = ''
+                }
+              }}
+              style={{ display:'inline-flex', alignItems:'center', gap:8 }}
+            >
+              {isBatchLoading ? (
+                <>
+                  {/* SVG 轉圈圈，不需額外 CSS */}
+                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.25"/>
+                    <path d="M8 1 a7 7 0 0 1 7 7" stroke="currentColor" strokeWidth="2" fill="none">
+                      <animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="0.9s" repeatCount="indefinite"/>
+                    </path>
+                  </svg>
+                  產生中…
+                </>
+              ) : '產生並下載 ZIP'}
+            </button>
+
+            <a className="btn" href="/sample.xlsx" download>範本</a>
+          </div>
 
           <div className="muted" style={{marginTop:8}}>
             Excel 欄位：姓名（必）、薪資（必）、薪資數字大寫（選）、身份證字號（選）。本批次將套用上方「批次機構」。
