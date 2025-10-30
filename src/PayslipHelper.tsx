@@ -487,7 +487,7 @@ const data = {
               ) : '產生並下載 ZIP'}
             </button>
 
-            <a className="btn" href="/sample.xlsx" download>範本</a>
+            <a className="btn" href={`${BASE}sample.xlsx`} download>範本</a>
           </div>
 
           <div className="muted" style={{marginTop:8}}>
