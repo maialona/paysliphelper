@@ -108,6 +108,16 @@ body {
   border-color: transparent;
 }
 
+/* 讓所有按鈕的內容（文字/圖示）置中 */
+.btn,
+.btn.primary {
+  display: inline-flex;        /* 改成 flex 容器 */
+  align-items: center;         /* 垂直置中 */
+  justify-content: center;     /* 水平置中 */
+  gap: 8px;                    /* 若未來放圖示，文字與圖示間距 */
+  text-align: center;          /* 保險，確保文字置中 */
+}
+
 .muted { color: var(--muted); font-size: 14px; }
 .footer { color: var(--muted); font-size: 13px; }
 
@@ -272,3 +282,178 @@ input[type="file"]::-webkit-file-upload-button {
     0 6px 14px rgba(0,0,0,.08);
 }
 
+/* 簡易 tabs */
+.tabs { display:flex; gap:8px; margin:16px 0; }
+.tab { padding:8px 12px; border:1px solid var(--border); background:var(--surface); border-radius:8px; cursor:pointer; }
+.tab.active { outline:2px solid var(--primary, #4c8bf7); }
+
+/* 統整方塊 */
+.summary-grid {
+  display:grid;
+  grid-template-columns: repeat(7, minmax(60px, 1fr));
+  gap:8px;
+}
+.sum-item { border:1px solid var(--border); background:var(--surface); border-radius:8px; padding:8px 10px; text-align:center; }
+.sum-item .k { font-size:12px; opacity:.75; }
+.sum-item .v { font-weight:600; font-size:18px; }
+
+/* 表格 */
+.table-wrap { overflow:auto; border:1px solid var(--border); border-radius:10px; }
+.tbl { width:100%; border-collapse:collapse; background:var(--surface); }
+.tbl th, .tbl td { padding:8px 10px; border-bottom:1px solid var(--border); }
+.tbl thead th { position:sticky; top:0; background:var(--surface); z-index:1; }
+.tbl .num { text-align:right; font-variant-numeric: tabular-nums; }
+.row-error { background: rgba(255,0,0,.05); }
+
+.badge.ok { border:1px solid var(--border); padding:2px 6px; border-radius:999px; font-size:12px; }
+.badge.danger { background:#ffeded; color:#b10000; border-radius:999px; padding:2px 6px; font-size:12px; }
+
+/* ===== 主題變數（確保白天/夜晚值正確） ===== */
+:root {
+  --bg: #f7f8fb;
+  --surface: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #dfe3ea;
+  --accent: #2563eb;
+}
+
+.dark {
+  --bg: #0b0f14;
+  --surface: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #283345;
+  --accent: #60a5fa;
+}
+
+/* ===== 表單：統一背景/文字/邊框（修正日光模式 input 發黑） ===== */
+input[type="text"],
+input[type="number"],
+input[type="file"],
+input[type="search"],
+input[type="email"],
+select,
+textarea {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* 讓 placeholder 在兩種主題都不刺眼 */
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+/* 禁用狀態也跟著主題色 */
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: color-mix(in srgb, var(--surface) 80%, var(--bg) 20%);
+  color: var(--muted);
+}
+
+/* ===== Tabs：在夜間模式文字會變黑的修正 ===== */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 16px;
+}
+
+.tabs .tab {
+  appearance: none;
+  background: transparent;
+  color: var(--text) !important;   /* 關鍵：強制用主題文字色 */
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+.tabs .tab:hover {
+  background: color-mix(in srgb, var(--surface) 90%, var(--bg) 10%);
+  border-color: var(--border);
+}
+
+.tabs .tab.active {
+  background: var(--surface);
+  color: var(--text) !important;   /* 關鍵：active 也維持正確文字色 */
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent 75%);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border) 65%);
+}
+
+/* 可選：讓焦點更明顯（鍵盤操作友善） */
+.tabs .tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent 55%);
+}
+/* —— 現金面額拆分：手動輸入欄位強制白底 —— */
+/* 如果你 CashBreakdown 的手動輸入外層有 class，可把 .cash-manual 換成對應容器；沒有也沒關係，這段已經用很高權重 */
+.card .row input[type="text"],
+.card .row input[type="number"],
+.card input[type="text"],
+.card input[type="number"] {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  -webkit-text-fill-color: var(--text) !important; /* 兼容 Safari/Chromium */
+}
+
+/* 指定手動新增那兩格更保險（有 placeholder 就一起吃到） */
+input[placeholder="姓名"],
+input[placeholder*="薪資"] {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  -webkit-text-fill-color: var(--text) !important;
+}
+
+/* 修正 Chrome/Edge Autofill 造成的黑底/黃色底 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface) inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+  caret-color: var(--text) !important;
+  transition: background-color 99999s ease-in-out 0s; /* 防止閃爍 */
+}
+
+/* 明確告訴瀏覽器：表單同時支援亮/暗主題，但依我們的變數顏色渲染 */
+input, select, textarea {
+  color-scheme: light dark;
+}
+
+/* 讓表格遵守 colgroup 欄寬設定 */
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;   /* ★ 關鍵 */
+}
+
+/* 欄寬設定（可依需要微調） */
+.tbl-cash .col-name   { width: 120px; }
+.tbl-cash .col-amount { width: 100px; }
+
+/* 面額欄統一寬度，使用 clamp 在窄螢幕時自適應 */
+.tbl-cash .col-denom  { width: clamp(60px, 8vw, 78px); }
+
+/* 置中「姓名」欄；數字欄位維持靠右 */
+.tbl-cash th.name,
+.tbl-cash td.name {
+  text-align: center;   /* ★ 你要的置中 */
+}
+
+/* 讓最後一欄不要貼邊：表格外層包一個 padding */
+.table-wrap {
+  overflow-x: auto;
+  padding: 0 8px 6px;   /* ★ 右邊留一點 padding，看起來不會太貼邊 */
+}
+
+/*（選用）防止內容撐爆欄位：超出就換行或截斷 */
+.tbl th, .tbl td {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
