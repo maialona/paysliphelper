@@ -177,7 +177,7 @@ export default function CashBreakdown() {
             style={{
               marginTop:12,
               display:'grid',
-              gridTemplateColumns:'120px 1fr 100px',
+              gridTemplateColumns:'75px 1fr 135px',
               gap:8,
               alignItems:'center'
             }}
