@@ -210,21 +210,41 @@ function handleGenerateSingle() {
       const n = Number(String(salaryRaw).replace(/[,\\s]/g, ''))
       if (!Number.isFinite(n)) continue
 
-      const dateData = { ...defaultData }
-if (ymYear) dateData.民國年 = ymYear
-if (ymMonth) {
-  const m = Math.max(1, Math.min(12, Number(ymMonth)))
-  dateData.月 = String(m)
-}
+      // 1️⃣ 先用今天當預設
+      const dateData: { 民國年: string; 月: string; 日: string } = { ...defaultData }
 
-const data = {
-  姓名: name,
-  薪資: n.toString(),
-  薪資數字大寫: upperRaw ? String(upperRaw) : numberToChineseUpper(n),
-  身份證字號: idno,
-  機構: batchOrg,
-  ...dateData,
-}
+      // 2️⃣ 若 Excel 有「民國年 / 月 / 日」欄位，就優先用 Excel 的
+      const excelYear  = row['民國年']
+      const excelMonth = row['月']
+      const excelDay   = row['日']
+
+      if (excelYear != null && excelYear !== '') {
+        dateData.民國年 = String(excelYear).trim()
+      }
+      if (excelMonth != null && excelMonth !== '') {
+        dateData.月 = String(excelMonth).trim()
+      }
+      if (excelDay != null && excelDay !== '') {
+        dateData.日 = String(excelDay).trim()
+      }
+
+      // 3️⃣ 如果你在畫面上的「年月（選填）」有輸入，就再覆蓋 Excel
+      if (ymYear) {
+        dateData.民國年 = ymYear
+      }
+      if (ymMonth) {
+        const m = Math.max(1, Math.min(12, Number(ymMonth)))
+        dateData.月 = String(m)
+      }
+
+      const data = {
+        姓名: name,
+        薪資: n.toString(),
+        薪資數字大寫: upperRaw ? String(upperRaw) : numberToChineseUpper(n),
+        身份證字號: idno,
+        機構: batchOrg,
+        ...dateData,
+      }
 
       const zip = new PizZip(templateBuf!)
       const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true })
