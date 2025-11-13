@@ -7,13 +7,12 @@ import { saveAs } from 'file-saver'
 
 type TemplateKey = 'tpl1' | 'tpl2' | 'custom'
 
-
-const BASE = import.meta.env.BASE_URL || '/';
+const BASE = import.meta.env.BASE_URL || '/'
 const TEMPLATES = {
   tpl1: { label: '模板1：勞務所得(B+G+S)', url: `${BASE}templates/勞務所得(B+G+S).docx` },
   tpl2: { label: '模板2：預支獎金',        url: `${BASE}templates/預支獎金.docx` },
   custom: { label: '自訂上傳' },
-} as const;
+} as const
 
 const INSTITUTIONS = [
   '府城長照有限公司附設臺南市私立鴻康居家長照機構',
@@ -103,7 +102,7 @@ export default function PayslipHelper() {
   const [singleSalary, setSingleSalary] = useState('')
   const [singleIdno, setSingleIdno] = useState('')
 
-  // 新增：單張覆蓋用的年月（民國年、月），選填
+  // 單張覆蓋用的年月（民國年、月），選填
   const [ymYear, setYmYear] = useState('')   // 例如 114
   const [ymMonth, setYmMonth] = useState('') // 1~12
 
@@ -159,34 +158,31 @@ export default function PayslipHelper() {
     saveAs(out, `${base}-${fileLabel}.docx`)
   }
 
-function handleGenerateSingle() {
-  if (!templateBuf) return alert('請先選擇或載入模板')
-  if (!singleName || !singleSalary) return alert('請輸入姓名與薪資')
+  function handleGenerateSingle() {
+    if (!templateBuf) return alert('請先選擇或載入模板')
+    if (!singleName || !singleSalary) return alert('請輸入姓名與薪資')
 
-  const n = Number(singleSalary.toString().replace(/[\s,]/g, ''))
-  if (!Number.isFinite(n)) return alert('薪資需為數字')
+    const n = Number(singleSalary.toString().replace(/[\s,]/g, ''))
+    if (!Number.isFinite(n)) return alert('薪資需為數字')
 
-  // 用今天作為基底，再用使用者輸入覆蓋（若有填）
-  const dateData = { ...defaultData }
-  if (ymYear) dateData.民國年 = ymYear
-  if (ymMonth) {
-    const m = Math.max(1, Math.min(12, Number(ymMonth)))
-    // 若希望有前導零，改成：String(m).padStart(2, '0')
-    dateData.月 = String(m)
+    const dateData = { ...defaultData }
+    if (ymYear) dateData.民國年 = ymYear
+    if (ymMonth) {
+      const m = Math.max(1, Math.min(12, Number(ymMonth)))
+      dateData.月 = String(m)
+    }
+
+    const data = {
+      姓名: singleName,
+      薪資: n.toString(),
+      薪資數字大寫: numberToChineseUpper(n),
+      身份證字號: singleIdno || '',
+      機構: org || '',
+      ...dateData,
+    }
+
+    renderDocx(data, singleName)
   }
-  // 你沒有提供「日」欄位，就維持今天的日；若想清空可加：dateData.日 = ''
-
-  const data = {
-    姓名: singleName,
-    薪資: n.toString(),
-    薪資數字大寫: numberToChineseUpper(n),
-    身份證字號: singleIdno || '',
-    機構: org || '',
-    ...dateData, // ← 這裡改成覆蓋後的日期資料
-  }
-
-  renderDocx(data, singleName)
-}
 
   async function handleBatchExcel(file: File) {
     if (!templateBuf) return alert('請先選擇或載入模板')
@@ -200,15 +196,16 @@ function handleGenerateSingle() {
     const zipOut = new JSZip()
     const base = (templateName || TEMPLATES[selectedTpl].label || '輸出').replace(/\.docx$/i, '')
 
-    for (const row of rows) {
+    // ★ 用 forEach 取得 index，檔名加上 001、002… 讓順序跟 Excel 相同
+    rows.forEach((row, index) => {
       const name = row['姓名']?.toString()?.trim()
       const salaryRaw = row['薪資']
       const upperRaw = row['薪資數字大寫']
       const idno = row['身份證字號']?.toString() || ''
 
-      if (!name || salaryRaw === undefined || salaryRaw === null || salaryRaw === '') continue
+      if (!name || salaryRaw === undefined || salaryRaw === null || salaryRaw === '') return
       const n = Number(String(salaryRaw).replace(/[,\\s]/g, ''))
-      if (!Number.isFinite(n)) continue
+      if (!Number.isFinite(n)) return
 
       // 1️⃣ 先用今天當預設
       const dateData: { 民國年: string; 月: string; 日: string } = { ...defaultData }
@@ -228,7 +225,7 @@ function handleGenerateSingle() {
         dateData.日 = String(excelDay).trim()
       }
 
-      // 3️⃣ 如果你在畫面上的「年月（選填）」有輸入，就再覆蓋 Excel
+      // 3️⃣ 介面上的「年月（選填）」有填寫時，再覆蓋 Excel
       if (ymYear) {
         dateData.民國年 = ymYear
       }
@@ -249,11 +246,23 @@ function handleGenerateSingle() {
       const zip = new PizZip(templateBuf!)
       const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true })
       doc.setData(data)
-      try { doc.render() } catch (e) { console.error('渲染失敗：', name, e); continue }
-      const blob = doc.getZip().generate({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
-      const fname = `${base}-${name}.docx`
+      try {
+        doc.render()
+      } catch (e) {
+        console.error('渲染失敗：', name, e)
+        return
+      }
+
+      const blob = doc.getZip().generate({
+        type: 'blob',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      })
+
+      // ★ 三位數流水號
+      const order = String(index + 1).padStart(3, '0')
+      const fname = `${base}-${order}-${name}.docx`
       zipOut.file(fname, blob as any)
-    }
+    })
 
     const zipBlob = await zipOut.generateAsync({ type: 'blob' })
     saveAs(zipBlob, `${base}-批次輸出.zip`)
@@ -380,30 +389,31 @@ function handleGenerateSingle() {
               {INSTITUTIONS.map(x => <option key={x} value={x}>{x}</option>)}
             </select>
           </div>
+
           <div className="row">
-  <label>年月（選填）</label>
-  <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
-    <input
-      style={{width:120}}
-      inputMode="numeric"
-      placeholder="民國年"
-      value={ymYear}
-      onChange={(e)=> setYmYear(e.target.value.replace(/[^\d]/g,''))}
-    />
-    <span>年</span>
-    <input
-      style={{width:80}}
-      inputMode="numeric"
-      placeholder="月"
-      value={ymMonth}
-      onChange={(e)=> {
-        const v = e.target.value.replace(/[^\d]/g,'')
-        setYmMonth(v)
-      }}
-    />
-    <span>月</span>
-  </div>
-</div>
+            <label>年月（選填）</label>
+            <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
+              <input
+                style={{width:120}}
+                inputMode="numeric"
+                placeholder="民國年"
+                value={ymYear}
+                onChange={(e)=> setYmYear(e.target.value.replace(/[^\d]/g,''))}
+              />
+              <span>年</span>
+              <input
+                style={{width:80}}
+                inputMode="numeric"
+                placeholder="月"
+                value={ymMonth}
+                onChange={(e)=> {
+                  const v = e.target.value.replace(/[^\d]/g,'')
+                  setYmMonth(v)
+                }}
+              />
+              <span>月</span>
+            </div>
+          </div>
 
           <div className="row">
             <label>姓名</label>
@@ -495,7 +505,6 @@ function handleGenerateSingle() {
             >
               {isBatchLoading ? (
                 <>
-                  {/* SVG 轉圈圈，不需額外 CSS */}
                   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
                     <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.25"/>
                     <path d="M8 1 a7 7 0 0 1 7 7" stroke="currentColor" strokeWidth="2" fill="none">
