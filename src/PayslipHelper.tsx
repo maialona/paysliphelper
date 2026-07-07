@@ -8,9 +8,10 @@ import { saveAs } from 'file-saver'
 type TemplateKey = 'tpl1' | 'tpl2' | 'custom'
 
 const BASE = import.meta.env.BASE_URL || '/'
+const templateUrl = (fileName: string) => `${BASE}templates/${encodeURIComponent(fileName)}`
 const TEMPLATES = {
-  tpl1: { label: '模板1：勞務所得(B+G+S)', url: `${BASE}templates/勞務所得(B+G+S).docx` },
-  tpl2: { label: '模板2：預支獎金',        url: `${BASE}templates/預支獎金.docx` },
+  tpl1: { label: '模板1：勞務所得(B+G+S)', url: templateUrl('勞務所得(B+G+S).docx') },
+  tpl2: { label: '模板2：預支獎金',        url: templateUrl('預支獎金.docx') },
   custom: { label: '自訂上傳' },
 } as const
 
